@@ -15,3 +15,12 @@ services:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
     ports:
       - "1883:1883"
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    command: [ 'sleep', 'infinity' ]
+    depends_on:
+      - gateway
+      - mqtt-broker

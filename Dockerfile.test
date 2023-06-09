@@ -1,0 +1,10 @@
+FROM ubuntu
+
+RUN apt update -y && apt install -y wget
+
+RUN wget https://github.com/mainflux/coap-cli/releases/download/v0.3.3/coap-cli-linux -O /usr/bin/coap-cli && \
+    chmod +x /usr/bin/coap-cli
+
+RUN wget https://github.com/hivemq/mqtt-cli/releases/download/v4.16.0/mqtt-cli-4.16.0.deb && \
+    apt install ./mqtt-cli-4.16.0.deb -y && \
+    rm ./mqtt-cli-4.16.0.deb
