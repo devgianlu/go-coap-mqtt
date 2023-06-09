@@ -1,6 +1,12 @@
 # go-coap-mqtt
 
-go-coap-mqtt is a CoAP <-> MQTT gateway written in Go.
+`go-coap-mqtt` is a CoAP <-> MQTT gateway written in Go.
+
+Messages can be sent and received from both MQTT and CoAP. The following ways of exchanging messages are supported:
+- Publishing an MQTT message to a particular topic
+- Making a CoAP `POST /pub` request with a JSON body containing the topic and payload
+- Subscribing to a particular MQTT topic
+- Observing the CoAP `GET /sub/{topic}` endpoint
 
 ## Testing
 
@@ -16,7 +22,7 @@ coap-cli post pub -h gateway -p 5688 -d '{"topic":"test","payload":"hello from c
 To make a CoAP request to the `/sub` endpoint use:
 
 ```shell
-coap-cli get sub -h gateway -p 5688 -o
+coap-cli get sub/test -h gateway -p 5688 -o
 ```
 
 To publish an MQTT message use:
