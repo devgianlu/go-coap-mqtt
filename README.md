@@ -3,14 +3,19 @@
 `go-coap-mqtt` is a CoAP <-> MQTT gateway written in Go.
 
 Messages can be sent and received from both MQTT and CoAP. The following ways of exchanging messages are supported:
+
 - Publishing an MQTT message to a particular topic
 - Making a CoAP `POST /pub` request with a JSON body containing the topic and payload
 - Subscribing to a particular MQTT topic
 - Observing the CoAP `GET /sub/{topic}` endpoint
 
+This project was developed as part of the university course
+of [Telematica](https://corsi.unipr.it/it/ugov/degreecourse/191394).
+
 ## Testing
 
-The `test` container has two CLI tools installed for interacting with the gateway and MQTT broker: `mqtt` and `coap-cli`.
+The `test` container has two CLI tools installed for interacting with the gateway and MQTT
+broker: [mqtt](https://github.com/hivemq/mqtt-cli) and [coap-cli](https://github.com/mainflux/coap-cli).
 You can get an interactive shell inside the container with `docker compose exec test bash`.
 
 To make a CoAP request of the `/pub` endpoint use:
