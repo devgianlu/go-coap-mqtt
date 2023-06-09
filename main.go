@@ -21,6 +21,7 @@ type Message struct {
 
 type MqttCoapSignal struct {
 	Register bool
+	Topic    string
 	Conn     mux.Conn
 	Token    []byte
 }
@@ -28,6 +29,7 @@ type MqttCoapSignal struct {
 func mqttToCoapLoop(messages chan *Message, signaling chan *MqttCoapSignal) {
 	type Client struct {
 		Conn  mux.Conn
+		Topic string
 		Token []byte
 		Obs   uint32
 	}
@@ -39,6 +41,10 @@ func mqttToCoapLoop(messages chan *Message, signaling chan *MqttCoapSignal) {
 		select {
 		case msg := <-messages:
 			for _, c := range clients {
+				if msg.Topic != c.Topic {
+					continue
+				}
+
 				// Send the message to the given client
 				if err := SendCoapMessage(c.Conn, c.Token, func(m *pool.Message) {
 					m.SetCode(codes.Content)
@@ -59,7 +65,7 @@ func mqttToCoapLoop(messages chan *Message, signaling chan *MqttCoapSignal) {
 			}
 		case signal := <-signaling:
 			if signal.Register {
-				clients[string(signal.Token)] = &Client{Conn: signal.Conn, Token: signal.Token, Obs: 2}
+				clients[string(signal.Token)] = &Client{Conn: signal.Conn, Token: signal.Token, Topic: signal.Topic, Obs: 2}
 			} else {
 				delete(clients, string(signal.Token))
 			}
@@ -134,18 +140,23 @@ func main() {
 	})
 
 	// Subscribe to messages from MQTT with CoAP
-	coapServer.HandleResource("/sub", func(w mux.ResponseWriter, r *mux.Message) (codes.Code, string) {
+	coapServer.HandleResource("/sub/{topic}", func(w mux.ResponseWriter, r *mux.Message) (codes.Code, string) {
 		log.Debugf("[coap] got sub message %+v from %v", r, w.Conn().RemoteAddr())
+
+		topic, ok := r.RouteParams.Vars["topic"]
+		if !ok {
+			return codes.BadRequest, "missing topic"
+		}
 
 		obs, err := r.Options().Observe()
 		switch {
 		case r.Code() == codes.GET && err == nil && obs == 0:
-			// Let the CoAP client that it was registered
-			mqttToCoapSignaling <- &MqttCoapSignal{Register: true, Conn: w.Conn(), Token: r.Token()}
+			// Let the CoAP client know that it was registered
+			mqttToCoapSignaling <- &MqttCoapSignal{Register: true, Conn: w.Conn(), Token: r.Token(), Topic: topic}
 			return codes.Content, ""
 		case r.Code() == codes.GET && err == nil && obs == 1:
-			// Let the CoAP client that it was deregistered
-			mqttToCoapSignaling <- &MqttCoapSignal{Register: false, Conn: w.Conn(), Token: r.Token()}
+			// Let the CoAP client know that it was deregistered
+			mqttToCoapSignaling <- &MqttCoapSignal{Register: false, Conn: w.Conn(), Token: r.Token(), Topic: topic}
 			return codes.Content, ""
 		default:
 			// Let the CoAP client that the request was invalid
