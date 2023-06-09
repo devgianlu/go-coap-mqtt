@@ -1,0 +1,17 @@
+services:
+  gateway:
+    build: .
+    restart: unless-stopped
+    command: [ 'tcp://mqtt-broker:1883', 'coap-mqtt-gateway', '5688' ]
+    ports:
+      - "5688:5688"
+    depends_on:
+      - mqtt-broker
+
+  mqtt-broker:
+    image: eclipse-mosquitto
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "1883:1883"
