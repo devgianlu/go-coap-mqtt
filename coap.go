@@ -9,8 +9,10 @@ import (
 	"github.com/plgd-dev/go-coap/v3/net"
 	"github.com/plgd-dev/go-coap/v3/options"
 	"github.com/plgd-dev/go-coap/v3/udp"
+	udpClient "github.com/plgd-dev/go-coap/v3/udp/client"
 	log "github.com/sirupsen/logrus"
 	"strings"
+	"time"
 )
 
 type CoapServer struct {
@@ -51,7 +53,12 @@ func (c *CoapServer) HandleResource(pattern string, handler func(w mux.ResponseW
 }
 
 func (c *CoapServer) Serve() error {
-	return udp.NewServer(options.WithMux(c.mux)).Serve(c.udpConn)
+	return udp.NewServer(
+		options.WithMux(c.mux),
+		options.WithKeepAlive(8, 2*time.Second, func(cc *udpClient.Conn) {
+			log.Debugf("client at %s became inactive", cc.RemoteAddr())
+		}),
+	).Serve(c.udpConn)
 }
 
 func SendCoapMessage(cc mux.Conn, token []byte, f func(msg *pool.Message)) error {

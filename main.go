@@ -95,7 +95,9 @@ func main() {
 	}
 
 	// Subscribe to MQTT messages to rely them on CoAP
-	if err := mqttClient.Subscribe("#", func(_ mqtt.Client, m mqtt.Message) {
+	if err := mqttClient.Subscribe("#", func(c mqtt.Client, m mqtt.Message) {
+		log.Debugf("[mqtt] got message %d", m.MessageID())
+
 		mqttToCoapMessages <- &Message{Topic: m.Topic(), Payload: string(m.Payload())}
 	}); err != nil {
 		log.WithError(err).Fatal("failed subscribing to mqtt topic")
